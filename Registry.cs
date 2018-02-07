@@ -23,6 +23,8 @@ namespace DreamPlace.Lib.Rx
 
 		public static void Subscribe(Action<RegistryEventArgs<TValue>> subscriber, object id = null)
 		{
+			Registry<string, string>.OnNext(new RegistryEventArgs<string>("", ActionMode.Update, null));
+
 			var taergetElement = Find(id);
 			if (taergetElement == null)
 			{
@@ -159,7 +161,7 @@ namespace DreamPlace.Lib.Rx
 
 		/// <exception cref="NullReferenceException">Нет получателя</exception>
 		/// <exception cref="Exception">A delegate callback throws an exception.</exception>
-		public static void OnNext(RegistryEventArgs<TValue> e, object id)
+		public static void OnNext(RegistryEventArgs<TValue> e, object id = null)
 		{
 			var targetElement = Find(id);
 

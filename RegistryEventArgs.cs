@@ -9,7 +9,7 @@ namespace DreamPlace.Lib.Rx
 	}
 	public class RegistryEventArgs<TValue> : EventArgs
 	{
-		public RegistryEventArgs(TValue e, ActionMode actionMode, object source)
+		public RegistryEventArgs(TValue e, ActionMode actionMode = ActionMode.Update, object source = null)
 		{
 			Source = source;
 			Value = e;
