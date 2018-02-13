@@ -4,73 +4,123 @@ using System.Linq;
 
 namespace DreamPlace.Lib.Rx
 {
+	internal class OwnSender
+	{	
+	}
+
 	public enum PublicMode
 	{
 		AddNew,
 		Replace
 	}
 
+	public static class Registry<TTargetType>
+	{
+		public static TTargetType GetValue()
+		{
+			var reslt = Registry<TTargetType, TTargetType>.Find();
+
+			if (reslt == null)
+			{
+				throw new ArgumentException($"Нет реализации {typeof(TTargetType)}");
+			}
+
+			return reslt.FirstOrDefault().Value;
+		}
+
+		public static void PublicValue<TValue>(TValue value) where TValue:TTargetType
+		{
+			Registry<TTargetType, TTargetType>.PublicValue<OwnSender>(value);
+			//var taergetElement = Registry<TTargetType, TTargetType>.Find().FirstOrDefault();
+			//if (taergetElement == null)
+			//{
+			//	Registry<TTargetType, TTargetType>.Values.Add(
+			//		new RegistryElement<TTargetType>(typeof(OwnSender), typeof(TTargetType), typeof(TValue), value, null)
+			//		);
+			//}
+			//else
+			//{
+			//	taergetElement.Value = value;
+			//}
+		}
+
+		public static void OnNext(RegistryEventArgs<TTargetType> e, object id)
+		{
+			var targetElement = Registry<TTargetType, TTargetType>.Find<OwnSender>(id).FirstOrDefault();
+			targetElement?.EventActions.ForEach(l => l?.Invoke(e));
+		}
+
+		public static void OnNext(TTargetType e, object id)
+		{
+			OnNext(new RegistryEventArgs<TTargetType>(e), id);
+		}
+
+		public static void Subscribe(Action<RegistryEventArgs<TTargetType>> subscriber, object id = null)
+		{
+			var taergetElement = Registry<TTargetType, TTargetType>.Find<OwnSender>(id).FirstOrDefault();
+			if (taergetElement == null)
+			{
+				Registry<TTargetType, TTargetType>.PublicValue(default(TTargetType), id);
+				taergetElement = Registry<TTargetType, TTargetType>.Find<OwnSender>(id).FirstOrDefault();
+			}
+
+			taergetElement?.EventActions.Add(subscriber);
+		}
+	}
+
 	public static class Registry<TTargetType, TValue>
 	{
 		private static event Action<object, RegistryEventArgs<TValue>> _registryEvent;
-		private static List<RegistryElement<TValue>> _values;
+		internal static List<RegistryElement<TValue>> Values;
 
 		static Registry()
 		{
-			if (_values == null)
-				_values = new List<RegistryElement<TValue>>();
+			if (Values == null)
+				Values = new List<RegistryElement<TValue>>();
 		}
 
 		public static void Subscribe(Action<RegistryEventArgs<TValue>> subscriber, object id = null)
 		{
-			Registry<string, string>.OnNext(new RegistryEventArgs<string>("", ActionMode.Update, null));
-
-			var taergetElement = Find(id);
+			var taergetElement = Find<OwnSender>(id).FirstOrDefault();
 			if (taergetElement == null)
 			{
-				PublicValue(default(TValue), id);
-				taergetElement = Find(id);
+				PublicValue<OwnSender>(default(TValue), id);
+				taergetElement = Find<OwnSender>(id).FirstOrDefault();
 			}
-
-			if (taergetElement != null)
-				taergetElement.EventAction = subscriber;
+			
+			taergetElement?.EventActions.Add(subscriber);
 		}
 
 		public static void Subscribe<TSenderType>(Action<RegistryEventArgs<TValue>> subscriber, object id = null)
 		{
-			var taergetElement = Find<TSenderType>(id);
+			var taergetElement = Find<TSenderType>(id).FirstOrDefault();
 			if (taergetElement == null)
 			{
 				PublicValue<TSenderType>(default(TValue), id);
-				taergetElement = Find<TSenderType>(id);
+				taergetElement = Find<TSenderType>(id).FirstOrDefault();
 			}
 
-			if (taergetElement != null)
-				taergetElement.EventAction = subscriber;
+			taergetElement.EventActions.Add(subscriber);
 		}
 
 		public static void UnSubscribe(object id)
 		{
-			var taergetElement = Find(id);
-
-			if(taergetElement!=null)
-			taergetElement.EventAction = null;
+			var taergetElement = Find<OwnSender>(id).FirstOrDefault();
+			taergetElement?.EventActions.Clear();
 		}
 
 		public static void UnSubscribe<TSenderType>(object id)
 		{
-			var taergetElement = Find<TSenderType>(id);
-
-			if (taergetElement != null)
-				taergetElement.EventAction = null;
+			var taergetElement = Find<TSenderType>(id).FirstOrDefault();
+				taergetElement?.EventActions.Clear();
 		}
 
 		public static void PublicValue(TValue value, object id = null)
 		{
-			var taergetElement = Find(id);
+			var taergetElement = Find<OwnSender>(id).FirstOrDefault();
 			if (taergetElement == null)
 			{
-				_values.Add(new RegistryElement<TValue>(typeof(TTargetType), typeof(TValue), value, id));
+				Values.Add(new RegistryElement<TValue>(typeof(OwnSender), typeof(TTargetType), typeof(TValue), value, id));
 			}
 			else
 			{
@@ -80,10 +130,10 @@ namespace DreamPlace.Lib.Rx
 
 		public static void PublicValue<TSenderType>(TValue value, object id = null)
 		{
-			var taergetElement = Find<TSenderType>(id);
+			var taergetElement = Find<TSenderType>(id).FirstOrDefault();
 			if (taergetElement == null)
 			{
-				_values.Add(new RegistryElement<TValue>(typeof(TSenderType), typeof(TTargetType), typeof(TValue), value, id));
+				Values.Add(new RegistryElement<TValue>(typeof(TSenderType), typeof(TTargetType), typeof(TValue), value, id));
 			}
 			else
 			{
@@ -93,7 +143,7 @@ namespace DreamPlace.Lib.Rx
 
 		public static TValue GetValue(object id = null)
 		{
-			var reslt = Find(id);
+			var reslt = Find<OwnSender>(id).FirstOrDefault();
 
 			if (reslt == null)
 			{
@@ -107,7 +157,7 @@ namespace DreamPlace.Lib.Rx
 
 		public static TValue GetValue<TSendrType>(object id = null)
 		{
-			var reslt = Find<TSendrType>(id);
+			var reslt = Find<TSendrType>(id).FirstOrDefault();
 
 			if (reslt == null)
 			{
@@ -119,9 +169,9 @@ namespace DreamPlace.Lib.Rx
 			}
 		}
 
-		public static IEnumerable<TValue> GetValues<TSendrType>()
+		public static IEnumerable<TValue> GetValues<TSendrType>(object id=null)
 		{
-			var reslt = Find<TSendrType>();
+			var reslt = Find<TSendrType>(id);
 
 			if (reslt == null)
 			{
@@ -133,9 +183,9 @@ namespace DreamPlace.Lib.Rx
 			}
 		}
 
-		public static IEnumerable<TValue> GetValues()
+		public static IEnumerable<TValue> GetValues(object id =null)
 		{
-			var reslt = Find();
+			var reslt = Find<OwnSender>(id);
 
 			if (reslt == null)
 			{
@@ -161,40 +211,40 @@ namespace DreamPlace.Lib.Rx
 
 		/// <exception cref="NullReferenceException">Нет получателя</exception>
 		/// <exception cref="Exception">A delegate callback throws an exception.</exception>
-		public static void OnNext(RegistryEventArgs<TValue> e, object id = null)
+		public static void OnNext(RegistryEventArgs<TValue> e, object id)
 		{
-			var targetElement = Find(id);
-
-			targetElement?.EventAction?.Invoke(e);
+			var targetElement = Find<OwnSender>(id).FirstOrDefault();
+			targetElement?.EventActions.ForEach(l => l?.Invoke(e));
 		}
 
-		public static void OnNext<TSender>(RegistryEventArgs<TValue> e, object id = null)
+		public static void OnNext<TSender>(RegistryEventArgs<TValue> e, object id)
 		{
-			var targetElement = Find<TSender>(id);
-
-			targetElement?.EventAction?.Invoke(e);
+			var targetElement = Find<TSender>(id).FirstOrDefault();
+			targetElement?.EventActions.ForEach(l => l?.Invoke(e));
 		}
 
-		private static RegistryElement<TValue> Find(object id)
+		public static void OnNext<TSender>(TValue e, object id = null)
 		{
-			return _values.FirstOrDefault(el => el!=null && el.Id.Equals(id));
-		}
-		private static RegistryElement<TValue> Find<TSender>(object id)
-		{
-			return _values.FirstOrDefault(el => 
-			el?.SourceType == typeof(TSender)
-			&&
-			el.Id.Equals(id)
-			);
+			OnNext<TSender>(new RegistryEventArgs<TValue>(e), id);
 		}
 
-		private static IEnumerable<RegistryElement<TValue>> Find<TSender>()
+		public static void OnNext(TValue e, object id = null)
 		{
-			return _values.Where(el => el?.SourceType == typeof(TSender));
+			OnNext(new RegistryEventArgs<TValue>(e), id);
 		}
-		private static IEnumerable<RegistryElement<TValue>> Find()
+
+		internal static IEnumerable<RegistryElement<TValue>> Find<TSender>(object id)
 		{
-			return _values;
+			return Values.Where(el =>
+			   el?.SourceType == typeof(TSender)
+			&& el.TargetType == typeof(TTargetType)
+			&& el.ValueType == typeof(TValue)
+			&& el.Id == id);
+		}
+
+		internal static IEnumerable<RegistryElement<TValue>> Find()
+		{
+			return Values;
 		}
 	}
 }
