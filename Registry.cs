@@ -22,6 +22,18 @@ namespace DreamPlace.Lib.Rx
 
 			if (reslt == null)
 			{
+				throw new ArgumentException($"{typeof(TTargetType)} isn't published");
+			}
+
+			return reslt.FirstOrDefault().Value;
+		}
+
+		public static TTargetType GetValue(object id)
+		{
+			var reslt = Registry<TTargetType, TTargetType>.Find<OwnSender>(id);
+
+			if (reslt == null)
+			{
 				throw new ArgumentException($"Нет реализации {typeof(TTargetType)}");
 			}
 
@@ -31,18 +43,13 @@ namespace DreamPlace.Lib.Rx
 		public static void PublicValue<TValue>(TValue value) where TValue:TTargetType
 		{
 			Registry<TTargetType, TTargetType>.PublicValue<OwnSender>(value);
-			//var taergetElement = Registry<TTargetType, TTargetType>.Find().FirstOrDefault();
-			//if (taergetElement == null)
-			//{
-			//	Registry<TTargetType, TTargetType>.Values.Add(
-			//		new RegistryElement<TTargetType>(typeof(OwnSender), typeof(TTargetType), typeof(TValue), value, null)
-			//		);
-			//}
-			//else
-			//{
-			//	taergetElement.Value = value;
-			//}
 		}
+
+		public static void PublicValue<TValue>(TValue value, object id) where TValue : TTargetType
+		{
+			Registry<TTargetType, TTargetType>.PublicValue<OwnSender>(value, id);
+		}
+
 
 		public static void OnNext(RegistryEventArgs<TTargetType> e, object id)
 		{
