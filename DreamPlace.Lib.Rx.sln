@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DreamPlace.Lib.Rx", "DreamP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DreamPlace.Libs.NetCore.Rx", "DreamPlace.Libs.NetCore.Rx\DreamPlace.Libs.NetCore.Rx.csproj", "{F271B5B7-F1ED-4388-A7C4-07EEE6804888}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "TestProject1\TestProject1.csproj", "{43AC4B7A-6618-4481-B6C7-FBAEF771821D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{F271B5B7-F1ED-4388-A7C4-07EEE6804888}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F271B5B7-F1ED-4388-A7C4-07EEE6804888}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F271B5B7-F1ED-4388-A7C4-07EEE6804888}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43AC4B7A-6618-4481-B6C7-FBAEF771821D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43AC4B7A-6618-4481-B6C7-FBAEF771821D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43AC4B7A-6618-4481-B6C7-FBAEF771821D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43AC4B7A-6618-4481-B6C7-FBAEF771821D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
