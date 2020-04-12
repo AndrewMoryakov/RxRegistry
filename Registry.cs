@@ -215,7 +215,7 @@ namespace DreamPlace.Lib.Rx
 			var taergetElement = Find<OwnType>(id).FirstOrDefault();
 			if (taergetElement == null)
 			{
-				Values.Add(new RegistryElement<TValue>(typeof(OwnType), typeof(TTargetType), typeof(TValue), value, id));
+				Values.Add(new RegistryElement<TValue>(typeof(OwnType), typeof(TTargetType), value, id));
 			}
 			else
 			{
@@ -233,7 +233,7 @@ namespace DreamPlace.Lib.Rx
 			var taergetElement = Find<TSenderType>(id).FirstOrDefault();
 			if (taergetElement == null)
 			{
-				Values.Add(new RegistryElement<TValue>(typeof(TSenderType), typeof(TTargetType), typeof(TValue), value, id));
+				Values.Add(new RegistryElement<TValue>(typeof(TSenderType), typeof(TTargetType), value, id));
 			}
 			else
 			{

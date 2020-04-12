@@ -4,19 +4,12 @@ namespace DreamPlace.Libs.NetCore.Rx
 {
 	public class RegistryElement<TValue>
 	{
-		public RegistryElement(Type sourceType, Type targetType, Type valueType, TValue value, object id)
+		public RegistryElement(Type sourceType, Type targetType, TValue value, object id)
 		{
+			TargetType = targetType;
 			SourceType = sourceType;
-			TargetType = targetType;
-			ValueType = valueType;
-			Value = value;
-			Id = id;
-		}
-
-		public RegistryElement(Type targetType, Type valueType, TValue value, object id)
-		{
-			TargetType = targetType;
-			ValueType = valueType;
+			ValueType = typeof(TValue);
+			
 			Value = value;
 			Id = id;
 		}

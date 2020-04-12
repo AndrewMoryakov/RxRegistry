@@ -4,6 +4,7 @@ using NUnit.Framework;
 
 namespace TestProject1
 {
+    //ToDo нужно сделать тестов для дженерик типов
     [TestFixture]
     public class Tests
     {
