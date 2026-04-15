@@ -45,6 +45,8 @@
     <Compile Include="Registry.cs" />
     <Compile Include="RegistryElement.cs" />
     <Compile Include="RegistryEventArgs.cs" />
+    <Compile Include="RemovalContract.cs" />
+    <Compile Include="RegistryScope.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

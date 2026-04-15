@@ -95,6 +95,21 @@ namespace DreamPlace.Lib.Rx
 
 			taergetElement?.EventActions.Add(subscriber);
 		}
+
+		public static RemovalContract<TValue> Remove<TValue>(object id = null)
+		{
+			return Registry<OwnType, TValue>.Remove<OwnType>(id);
+		}
+
+		public static RemovalContract<TValue> Clear<TValue>()
+		{
+			return Registry<OwnType, TValue>.Clear();
+		}
+
+		public static RegistryScope CreateScope()
+		{
+			return new RegistryScope();
+		}
 	}
 	
 //	public static class Registry<TTargetType>
@@ -205,9 +220,42 @@ namespace DreamPlace.Lib.Rx
 				taergetElement?.EventActions.Clear();
 		}
 
+		public static RemovalContract<TValue> Remove(object id = null)
+		{
+			return Remove<OwnType>(id);
+		}
+
+		public static RemovalContract<TValue> Remove<TSenderType>(object id = null)
+		{
+			var elements = Find<TSenderType>(id).ToList();
+			if (elements.Count == 0) return null;
+
+			return new RemovalContract<TValue>(elements, () =>
+			{
+				foreach (var el in elements)
+				{
+					el.EventActions.Clear();
+					Values.Remove(el);
+				}
+			});
+		}
+
+		public static RemovalContract<TValue> Clear()
+		{
+			var elements = Values.ToList();
+			if (elements.Count == 0) return null;
+
+			return new RemovalContract<TValue>(elements, () =>
+			{
+				foreach (var el in elements)
+					el.EventActions.Clear();
+				Values.Clear();
+			});
+		}
+
 		public static void Add(TValue value, object id = null)
 		{
-			throw new NotImplementedException();	
+			throw new NotImplementedException();
 		}
 		
 		public static void Public(TValue value, object id = null)

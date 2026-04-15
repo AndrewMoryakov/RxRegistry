@@ -128,6 +128,148 @@ namespace TestProject1
             Assert.IsTrue(Registry.GetValue<int>() == 1);
         }
 
+        // Remove с контрактом подтверждения
+
+        [Test]
+        public void Remove_ReturnsContractWithCorrectInfo()
+        {
+            Registry.Public("to_remove", 100);
+
+            var contract = Registry.Remove<string>(100);
+
+            Assert.IsNotNull(contract);
+            Assert.AreEqual(1, contract.Count);
+            Assert.AreEqual("to_remove", contract.Values[0]);
+            Assert.IsFalse(contract.IsConfirmed);
+
+            // Значение ещё в реестре — контракт не подтверждён
+            Assert.AreEqual("to_remove", Registry.GetValue<string>(100));
+        }
+
+        [Test]
+        public void Remove_ConfirmActuallyRemoves()
+        {
+            Registry.Public("will_die", 101);
+
+            var contract = Registry.Remove<string>(101);
+            contract.Confirm();
+
+            Assert.IsTrue(contract.IsConfirmed);
+            Assert.IsNull(Registry.GetValue<string>(101));
+        }
+
+        [Test]
+        public void Remove_WithoutConfirm_ValueSurvives()
+        {
+            Registry.Public("survivor", 102);
+
+            var contract = Registry.Remove<string>(102);
+            // Не вызываем Confirm()
+
+            Assert.AreEqual("survivor", Registry.GetValue<string>(102));
+        }
+
+        [Test]
+        public void Remove_NonExistent_ReturnsNull()
+        {
+            var contract = Registry.Remove<string>(999);
+
+            Assert.IsNull(contract);
+        }
+
+        [Test]
+        public void Remove_DoubleConfirm_Throws()
+        {
+            Registry.Public("once", 103);
+
+            var contract = Registry.Remove<string>(103);
+            contract.Confirm();
+
+            Assert.Throws<InvalidOperationException>(() => contract.Confirm());
+        }
+
+        [Test]
+        public void Remove_ContractShowsSubscriberCount()
+        {
+            Registry.Subscribe<long>((e) => { }, 200);
+            Registry.Subscribe<long>((e) => { }, 200);
+
+            var contract = Registry.Remove<long>(200);
+
+            Assert.IsNotNull(contract);
+            Assert.AreEqual(2, contract.SubscriberCount);
+
+            contract.Confirm();
+        }
+
+        // Clear с контрактом подтверждения
+
+        [Test]
+        public void Clear_ReturnsContractWithAllElements()
+        {
+            Registry.Public<double>(1.0, 300);
+            Registry.Public<double>(2.0, 301);
+            Registry.Public<double>(3.0, 302);
+
+            var contract = Registry.Clear<double>();
+
+            Assert.IsNotNull(contract);
+            Assert.IsTrue(contract.Count >= 3);
+            Assert.IsFalse(contract.IsConfirmed);
+        }
+
+        [Test]
+        public void Clear_ConfirmRemovesAll()
+        {
+            Registry.Public<float>(1.0f, 400);
+            Registry.Public<float>(2.0f, 401);
+
+            var contract = Registry.Clear<float>();
+            contract.Confirm();
+
+            Assert.AreEqual(default(float), Registry.GetValue<float>(400));
+            Assert.AreEqual(default(float), Registry.GetValue<float>(401));
+        }
+
+        // RegistryScope
+
+        [Test]
+        public void Scope_ValuesAvailableDuringScope()
+        {
+            using (var scope = Registry.CreateScope())
+            {
+                scope.Public<string>("scoped_value", 500);
+
+                Assert.AreEqual("scoped_value", Registry.GetValue<string>(500));
+            }
+        }
+
+        [Test]
+        public void Scope_ValuesRemovedAfterDispose()
+        {
+            using (var scope = Registry.CreateScope())
+            {
+                scope.Public<string>("temporary", 501);
+            }
+
+            Assert.IsNull(Registry.GetValue<string>(501));
+        }
+
+        [Test]
+        public void Scope_MultipleValues_AllRemovedAfterDispose()
+        {
+            using (var scope = Registry.CreateScope())
+            {
+                scope.Public<int>(10, 600);
+                scope.Public<int>(20, 601);
+                scope.Public<string>("temp", 602);
+            }
+
+            Assert.AreEqual(default(int), Registry.GetValue<int>(600));
+            Assert.AreEqual(default(int), Registry.GetValue<int>(601));
+            Assert.IsNull(Registry.GetValue<string>(602));
+        }
+
         enum TestEnum
         {
             A,
@@ -136,7 +278,7 @@ namespace TestProject1
 
         class B
         {
-            
+
         }
         class  A
         {
