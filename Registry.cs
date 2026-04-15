@@ -1,19 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace DreamPlace.Lib.Rx
 {
 	internal class OwnType
-	{	
+	{
 	}
 
-	public enum PublicMode
-	{
-		AddNew,
-		Replace
-	}
-	
 	public static class Registry
 	{
 		public static IEnumerable<TValue> GetValues<TValue>()
@@ -23,62 +17,45 @@ namespace DreamPlace.Lib.Rx
 			if (allValues == null)
 				throw new ArgumentException($"Нет данных для {typeof(TValue)}");
 
-			return allValues.Select(el=>el.Value);
+			return allValues.Select(el => el.Value);
 		}
-		
+
 		public static TValue GetValue<TValue>()
 		{
-			var reslt = Registry<OwnType, TValue>.Values;
+			var reslt = Registry<OwnType, TValue>.Values.FirstOrDefault();
 
 			if (reslt == null)
 			{
 				throw new ArgumentException($"{typeof(TValue)} isn't published");
 			}
 
-			return reslt.FirstOrDefault().Value;
+			return reslt.Value;
 		}
-		//
-		// public static TValue GetValues<TValue>(object id)
-		// {
-		// 	RegistryElement<TValue> allValues = Registry<OwnType, TValue>.Values.Single(id);
-		//
-		// 	if (allValues == null)
-		// 		throw new ArgumentException($"Нет данных для {typeof(TValue)}");
-		//
-		// 	return allValues
-		// }
-		
+
 		public static TValue GetValue<TValue>(object id)
 		{
-			var reslt = Registry<OwnType, TValue>.Find<OwnType>(id);
+			var reslt = Registry<OwnType, TValue>.Find<OwnType>(id).FirstOrDefault();
 
 			if (reslt == null)
 			{
-				throw new ArgumentException($"Нет реализации {typeof(TValue)}");
+				return default(TValue);
 			}
 
-			return reslt.FirstOrDefault().Value;
+			return reslt.Value;
 		}
 
-		// public static void Add<TValue>(TValue value)
-		// {
-		// 	throw new NotImplementedException();
-		// }
-		
-		public static void Public<TValue>(TValue value) 
+		public static void Public<TValue>(TValue value)
 			=> Registry<OwnType, TValue>.Public<OwnType>(value);
 
-		// public static void Add<TValue>(TValue value, object id)
-		// {
-		// 	throw new NotImplementedException();
-		// }
-		
-		public static void Public<TValue>(TValue value, object id) 
+		public static void Public<TValue>(TValue value, object id)
 			=> Registry<OwnType, TValue>.Public<OwnType>(value, id);
+
+		public static void PublicWeak<TValue>(TValue value, object id = null) where TValue : class
+			=> Registry<OwnType, TValue>.PublicWeak<OwnType>(value, id);
 
 		public static void OnNext<TValue>(RegistryEventArgs<TValue> e, object id)
 		{
-			var targetElement = Registry<OwnType, TValue>.Find<OwnType>(id).Single();
+			var targetElement = Registry<OwnType, TValue>.Find<OwnType>(id).FirstOrDefault();
 			targetElement?.EventActions.ForEach(l => l?.Invoke(e));
 		}
 
@@ -86,81 +63,39 @@ namespace DreamPlace.Lib.Rx
 
 		public static void Subscribe<TValue>(Action<RegistryEventArgs<TValue>> subscriber, object id = null)
 		{
-			var taergetElement = Registry<OwnType, TValue>.Find<OwnType>(id).FirstOrDefault();
-			if (taergetElement == null)
+			var targetElement = Registry<OwnType, TValue>.Find<OwnType>(id).FirstOrDefault();
+			if (targetElement == null)
 			{
 				Registry<OwnType, TValue>.Public(default(TValue), id);
-				taergetElement = Registry<OwnType, TValue>.Find<OwnType>(id).FirstOrDefault();
+				targetElement = Registry<OwnType, TValue>.Find<OwnType>(id).FirstOrDefault();
 			}
 
-			taergetElement?.EventActions.Add(subscriber);
+			targetElement?.EventActions.Add(subscriber);
+		}
+
+		public static RemovalContract<TValue> Remove<TValue>(object id = null)
+		{
+			return Registry<OwnType, TValue>.Remove<OwnType>(id);
+		}
+
+		public static RemovalContract<TValue> Clear<TValue>()
+		{
+			return Registry<OwnType, TValue>.Clear();
+		}
+
+		public static void CleanupDeadReferences<TValue>()
+		{
+			Registry<OwnType, TValue>.CleanupDeadReferences();
+		}
+
+		public static RegistryScope CreateScope()
+		{
+			return new RegistryScope();
 		}
 	}
-	
-//	public static class Registry<TTargetType>
-//	{
-//		public static TTargetType GetValue()
-//		{
-//			var reslt = Registry<TTargetType, TTargetType>.Find();
-//
-//			if (reslt == null)
-//			{
-//				throw new ArgumentException($"{typeof(TTargetType)} isn't published");
-//			}
-//
-//			return reslt.FirstOrDefault().Value;
-//		}
-//
-//		public static TTargetType GetValue(object id)
-//		{
-//			var reslt = Registry<TTargetType, TTargetType>.Find<OwnSender>(id);
-//
-//			if (reslt == null)
-//			{
-//				throw new ArgumentException($"Нет реализации {typeof(TTargetType)}");
-//			}
-//
-//			return reslt.FirstOrDefault().Value;
-//		}
-//
-//		public static void Public<TValue>(TValue value) where TValue:TTargetType
-//		{
-//			Registry<TTargetType, TTargetType>.Public<OwnSender>(value);
-//		}
-//
-//		public static void Public<TValue>(TValue value, object id) where TValue : TTargetType
-//		{
-//			Registry<TTargetType, TTargetType>.Public<OwnSender>(value, id);
-//		}
-//
-//
-//		public static void OnNext(RegistryEventArgs<TTargetType> e, object id)
-//		{
-//			var targetElement = Registry<TTargetType, TTargetType>.Find<OwnSender>(id).FirstOrDefault();
-//			targetElement?.EventActions.ForEach(l => l?.Invoke(e));
-//		}
-//
-//		public static void OnNext(TTargetType e, object id)
-//		{
-//			OnNext(new RegistryEventArgs<TTargetType>(e), id);
-//		}
-//
-//		public static void Subscribe(Action<RegistryEventArgs<TTargetType>> subscriber, object id = null)
-//		{
-//			var taergetElement = Registry<TTargetType, TTargetType>.Find<OwnSender>(id).FirstOrDefault();
-//			if (taergetElement == null)
-//			{
-//				Registry<TTargetType, TTargetType>.Public(default(TTargetType), id);
-//				taergetElement = Registry<TTargetType, TTargetType>.Find<OwnSender>(id).FirstOrDefault();
-//			}
-//
-//			taergetElement?.EventActions.Add(subscriber);
-//		}
-//	}
 
 	public static class Registry<TTargetType, TValue>
 	{
-		private static event Action<object, RegistryEventArgs<TValue>> _registryEvent;
 		internal static List<RegistryElement<TValue>> Values;
 
 		static Registry()
@@ -171,74 +106,125 @@ namespace DreamPlace.Lib.Rx
 
 		public static void Subscribe(Action<RegistryEventArgs<TValue>> subscriber, object id = null)
 		{
-			var taergetElement = Find<OwnType>(id).FirstOrDefault();
-			if (taergetElement == null)
+			var targetElement = Find<OwnType>(id).FirstOrDefault();
+			if (targetElement == null)
 			{
 				Public<OwnType>(default(TValue), id);
-				taergetElement = Find<OwnType>(id).FirstOrDefault();
+				targetElement = Find<OwnType>(id).FirstOrDefault();
 			}
-			
-			taergetElement?.EventActions.Add(subscriber);
+
+			targetElement?.EventActions.Add(subscriber);
 		}
 
 		public static void Subscribe<TSenderType>(Action<RegistryEventArgs<TValue>> subscriber, object id = null)
 		{
-			var taergetElement = Find<TSenderType>(id).FirstOrDefault();
-			if (taergetElement == null)
+			var targetElement = Find<TSenderType>(id).FirstOrDefault();
+			if (targetElement == null)
 			{
 				Public<TSenderType>(default(TValue), id);
-				taergetElement = Find<TSenderType>(id).FirstOrDefault();
+				targetElement = Find<TSenderType>(id).FirstOrDefault();
 			}
 
-			taergetElement.EventActions.Add(subscriber);
+			targetElement?.EventActions.Add(subscriber);
 		}
 
 		public static void UnSubscribe(object id)
 		{
-			var taergetElement = Find<OwnType>(id).FirstOrDefault();
-			taergetElement?.EventActions.Clear();
+			var targetElement = Find<OwnType>(id).FirstOrDefault();
+			targetElement?.EventActions.Clear();
 		}
 
 		public static void UnSubscribe<TSenderType>(object id)
 		{
-			var taergetElement = Find<TSenderType>(id).FirstOrDefault();
-				taergetElement?.EventActions.Clear();
+			var targetElement = Find<TSenderType>(id).FirstOrDefault();
+			targetElement?.EventActions.Clear();
 		}
 
-		public static void Add(TValue value, object id = null)
+		public static RemovalContract<TValue> Remove(object id = null)
 		{
-			throw new NotImplementedException();	
+			return Remove<OwnType>(id);
 		}
-		
+
+		public static RemovalContract<TValue> Remove<TSenderType>(object id = null)
+		{
+			var elements = Find<TSenderType>(id).ToList();
+			if (elements.Count == 0) return null;
+
+			return new RemovalContract<TValue>(elements, () =>
+			{
+				foreach (var el in elements)
+				{
+					el.EventActions.Clear();
+					Values.Remove(el);
+				}
+			});
+		}
+
+		public static RemovalContract<TValue> Clear()
+		{
+			var elements = Values.ToList();
+			if (elements.Count == 0) return null;
+
+			return new RemovalContract<TValue>(elements, () =>
+			{
+				foreach (var el in elements)
+					el.EventActions.Clear();
+				Values.Clear();
+			});
+		}
+
 		public static void Public(TValue value, object id = null)
 		{
-			var taergetElement = Find<OwnType>(id).FirstOrDefault();
-			if (taergetElement == null)
+			var targetElement = Find<OwnType>(id).FirstOrDefault();
+			if (targetElement == null)
 			{
 				Values.Add(new RegistryElement<TValue>(typeof(OwnType), typeof(TTargetType), value, id));
 			}
 			else
 			{
-				taergetElement.Value = value;
+				targetElement.Value = value;
 			}
 		}
 
-		public static void Add<TSenderType>(TValue value, object id = null)
-		{
-			throw new NotImplementedException();
-		}
-		
 		public static void Public<TSenderType>(TValue value, object id = null)
 		{
-			var taergetElement = Find<TSenderType>(id).FirstOrDefault();
-			if (taergetElement == null)
+			var targetElement = Find<TSenderType>(id).FirstOrDefault();
+			if (targetElement == null)
 			{
 				Values.Add(new RegistryElement<TValue>(typeof(TSenderType), typeof(TTargetType), value, id));
 			}
 			else
 			{
-				taergetElement.Value = value;
+				targetElement.Value = value;
 			}
+		}
+
+		public static void PublicWeak(TValue value, object id = null)
+		{
+			PublicWeak<OwnType>(value, id);
+		}
+
+		public static void PublicWeak<TSenderType>(TValue value, object id = null)
+		{
+			if (!typeof(TValue).IsClass && !typeof(TValue).IsInterface)
+				throw new InvalidOperationException(
+					$"WeakReference mode is only supported for reference types. {typeof(TValue)} is a value type.");
+
+			var element = Find<TSenderType>(id).FirstOrDefault();
+			if (element == null)
+			{
+				Values.Add(new RegistryElement<TValue>(typeof(TSenderType), typeof(TTargetType), value, id, isWeak: true));
+			}
+			else
+			{
+				element.IsWeak = true;
+				element.Value = value;
+			}
+		}
+
+		public static void CleanupDeadReferences()
+		{
+			Values.RemoveAll(el => el.IsWeak && !el.IsAlive);
 		}
 
 		public static TValue Get(object id = null)
@@ -255,9 +241,9 @@ namespace DreamPlace.Lib.Rx
 			}
 		}
 
-		public static TValue Get<TSendrType>(object id = null)
+		public static TValue Get<TSenderType>(object id = null)
 		{
-			var reslt = Find<TSendrType>(id).FirstOrDefault();
+			var reslt = Find<TSenderType>(id).FirstOrDefault();
 
 			if (reslt == null)
 			{
@@ -269,45 +255,15 @@ namespace DreamPlace.Lib.Rx
 			}
 		}
 
-		public static IEnumerable<TValue> GetValues<TSendrType>(object id=null)
+		public static IEnumerable<TValue> GetValues<TSenderType>(object id = null)
 		{
-			var reslt = Find<TSendrType>(id);
-
-			if (reslt == null)
-			{
-				return default(IEnumerable<TValue>);
-			}
-			else
-			{
-				return reslt.Select(el=>el.Value);
-			}
+			return Find<TSenderType>(id).Select(el => el.Value);
 		}
 
-		public static IEnumerable<TValue> GetValues(object id =null)
+		public static IEnumerable<TValue> GetValues(object id = null)
 		{
-			var reslt = Find<OwnType>(id);
-
-			if (reslt == null)
-			{
-				return default(IEnumerable<TValue>);
-			}
-			else
-			{
-				return reslt.Select(el => el.Value); ;
-			}
+			return Find<OwnType>(id).Select(el => el.Value);
 		}
-
-		//public static void RemoveValue(object id = null)
-		//{
-		//	var t = Find(id);
-		//	t.Value = default(TValue);
-		//}
-
-		//public static void RemoveValue<TSenderType>(object id = null)
-		//{
-		//	var t = Find<TSenderType>(id);
-		//	t.Value = default(TValue);
-		//}
 
 		/// <exception cref="NullReferenceException">Нет получателя</exception>
 		/// <exception cref="Exception">A delegate callback throws an exception.</exception>
@@ -340,8 +296,7 @@ namespace DreamPlace.Lib.Rx
 				return el?.SourceType == typeof(TSender)
 				       && el.TargetType == typeof(TTargetType)
 				       && el.ValueType == typeof(TValue)
-					
-				       && el.Id == id || (el.Id == null && id == null) || (el.Id != null && el.Id.Equals(id));
+				       && Equals(el.Id, id);
 			});
 		}
 
