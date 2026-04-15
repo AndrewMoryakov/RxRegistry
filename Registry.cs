@@ -73,8 +73,11 @@ namespace DreamPlace.Lib.Rx
 		// 	throw new NotImplementedException();
 		// }
 		
-		public static void Public<TValue>(TValue value, object id) 
+		public static void Public<TValue>(TValue value, object id)
 			=> Registry<OwnType, TValue>.Public<OwnType>(value, id);
+
+		public static void PublicWeak<TValue>(TValue value, object id = null) where TValue : class
+			=> Registry<OwnType, TValue>.PublicWeak<OwnType>(value, id);
 
 		public static void OnNext<TValue>(RegistryEventArgs<TValue> e, object id)
 		{
@@ -251,6 +254,34 @@ namespace DreamPlace.Lib.Rx
 					el.EventActions.Clear();
 				Values.Clear();
 			});
+		}
+
+		public static void PublicWeak(TValue value, object id = null)
+		{
+			PublicWeak<OwnType>(value, id);
+		}
+
+		public static void PublicWeak<TSenderType>(TValue value, object id = null)
+		{
+			if (!typeof(TValue).IsClass && !typeof(TValue).IsInterface)
+				throw new InvalidOperationException(
+					$"WeakReference mode is only supported for reference types. {typeof(TValue)} is a value type.");
+
+			var element = Find<TSenderType>(id).FirstOrDefault();
+			if (element == null)
+			{
+				Values.Add(new RegistryElement<TValue>(typeof(TSenderType), typeof(TTargetType), value, id, isWeak: true));
+			}
+			else
+			{
+				element.IsWeak = true;
+				element.Value = value;
+			}
+		}
+
+		public static void CleanupDeadReferences()
+		{
+			Values.RemoveAll(el => el.IsWeak && !el.IsAlive);
 		}
 
 		public static void Add(TValue value, object id = null)

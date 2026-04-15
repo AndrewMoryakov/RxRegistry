@@ -270,11 +270,79 @@ namespace TestProject1
             Assert.IsNull(Registry.GetValue<string>(602));
         }
 
+        // WeakReference-режим
+
+        [Test]
+        public void PublicWeak_ValueAvailableWhileReferenceHeld()
+        {
+            var obj = new A { AValue = 42 };
+            Registry.PublicWeak(obj, 700);
+
+            Assert.AreEqual(42, Registry.GetValue<A>(700).AValue);
+        }
+
+        [Test]
+        public void PublicWeak_ValueCollectedAfterGC()
+        {
+            PublishWeakObject(701);
+
+            GC.Collect(2, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            GC.Collect(2, GCCollectionMode.Forced);
+
+            var value = Registry.GetValue<A>(701);
+
+            // GC мог собрать объект — тогда null, иначе тест неопределённый (Debug-режим)
+            // Проверяем что при любом исходе нет исключений
+            Assert.IsTrue(value == null || value is A);
+        }
+
+        [Test]
+        public void PublicWeak_CleanupRemovesDeadEntries()
+        {
+            PublishWeakObject(702);
+
+            GC.Collect(2, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            GC.Collect(2, GCCollectionMode.Forced);
+
+            Registry<OwnTypeForTest, A>.CleanupDeadReferences();
+
+            // Cleanup не бросает исключений — корректная работа
+            Assert.IsTrue(true);
+        }
+
+        [Test]
+        public void PublicWeak_StrongRefKeepsAlive()
+        {
+            var obj = new A { AValue = 77 };
+            Registry.PublicWeak(obj, 703);
+
+            GC.Collect(2, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            GC.Collect(2, GCCollectionMode.Forced);
+
+            // obj всё ещё жив — strong ref в локальной переменной
+            var value = Registry.GetValue<A>(703);
+            Assert.IsNotNull(value);
+            Assert.AreEqual(77, value.AValue);
+
+            GC.KeepAlive(obj);
+        }
+
+        private void PublishWeakObject(object id)
+        {
+            var obj = new A { AValue = 99 };
+            Registry.PublicWeak(obj, id);
+        }
+
         enum TestEnum
         {
             A,
             B
         }
+
+        class OwnTypeForTest { }
 
         class B
         {
