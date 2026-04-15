@@ -50,8 +50,6 @@ namespace TestProject1
         [Test]
         public void Test3()
         {
-            var actualValue = false;
-            
             Registry.Public("123");
             Registry.Public("1234");
             
@@ -61,8 +59,6 @@ namespace TestProject1
         [Test]
         public void Test3_1()
         {
-            var actualValue = false;
-            
             Registry.Public("123", 0);
             Registry.Public("1234", 1);
 
@@ -76,8 +72,6 @@ namespace TestProject1
         [Test]
         public void Test3_1_1()
         {
-            var actualValue = false;
-            
             Registry.Public("1263");
             // Registry.Public("1234");
             
@@ -118,8 +112,6 @@ namespace TestProject1
         [Test]
         public void Test4()
         {
-            var actualValue = false;
-            
             Registry.Public<string>(null);
             Registry.Public<string>("12w3");
             Registry.Public<int>(1);
@@ -306,7 +298,7 @@ namespace TestProject1
             GC.WaitForPendingFinalizers();
             GC.Collect(2, GCCollectionMode.Forced);
 
-            Registry<OwnTypeForTest, A>.CleanupDeadReferences();
+            Registry.CleanupDeadReferences<A>();
 
             // Cleanup не бросает исключений — корректная работа
             Assert.IsTrue(true);
@@ -341,8 +333,6 @@ namespace TestProject1
             A,
             B
         }
-
-        class OwnTypeForTest { }
 
         class B
         {

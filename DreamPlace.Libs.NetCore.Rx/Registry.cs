@@ -22,26 +22,26 @@ namespace DreamPlace.Libs.NetCore.Rx
 
 		public static TValue GetValue<TValue>()
 		{
-			var reslt = Registry<OwnType, TValue>.Values;
+			var reslt = Registry<OwnType, TValue>.Values.FirstOrDefault();
 
 			if (reslt == null)
 			{
 				throw new ArgumentException($"{typeof(TValue)} isn't published");
 			}
 
-			return reslt.FirstOrDefault().Value;
+			return reslt.Value;
 		}
 
 		public static TValue GetValue<TValue>(object id)
 		{
-			var reslt = Registry<OwnType, TValue>.Find<OwnType>(id);
+			var reslt = Registry<OwnType, TValue>.Find<OwnType>(id).FirstOrDefault();
 
 			if (reslt == null)
 			{
-				throw new ArgumentException($"Нет реализации {typeof(TValue)}");
+				return default(TValue);
 			}
 
-			return reslt.FirstOrDefault().Value;
+			return reslt.Value;
 		}
 
 		public static void Public<TValue>(TValue value)
@@ -55,7 +55,7 @@ namespace DreamPlace.Libs.NetCore.Rx
 
 		public static void OnNext<TValue>(RegistryEventArgs<TValue> e, object id)
 		{
-			var targetElement = Registry<OwnType, TValue>.Find<OwnType>(id).Single();
+			var targetElement = Registry<OwnType, TValue>.Find<OwnType>(id).FirstOrDefault();
 			targetElement?.EventActions.ForEach(l => l?.Invoke(e));
 		}
 
@@ -81,6 +81,11 @@ namespace DreamPlace.Libs.NetCore.Rx
 		public static RemovalContract<TValue> Clear<TValue>()
 		{
 			return Registry<OwnType, TValue>.Clear();
+		}
+
+		public static void CleanupDeadReferences<TValue>()
+		{
+			Registry<OwnType, TValue>.CleanupDeadReferences();
 		}
 
 		public static RegistryScope CreateScope()
@@ -120,7 +125,7 @@ namespace DreamPlace.Libs.NetCore.Rx
 				targetElement = Find<TSenderType>(id).FirstOrDefault();
 			}
 
-			targetElement.EventActions.Add(subscriber);
+			targetElement?.EventActions.Add(subscriber);
 		}
 
 		public static void UnSubscribe(object id)
@@ -252,30 +257,12 @@ namespace DreamPlace.Libs.NetCore.Rx
 
 		public static IEnumerable<TValue> GetValues<TSenderType>(object id = null)
 		{
-			var reslt = Find<TSenderType>(id);
-
-			if (reslt == null)
-			{
-				return default(IEnumerable<TValue>);
-			}
-			else
-			{
-				return reslt.Select(el => el.Value);
-			}
+			return Find<TSenderType>(id).Select(el => el.Value);
 		}
 
 		public static IEnumerable<TValue> GetValues(object id = null)
 		{
-			var reslt = Find<OwnType>(id);
-
-			if (reslt == null)
-			{
-				return default(IEnumerable<TValue>);
-			}
-			else
-			{
-				return reslt.Select(el => el.Value);
-			}
+			return Find<OwnType>(id).Select(el => el.Value);
 		}
 
 		/// <exception cref="NullReferenceException">Нет получателя</exception>
